@@ -1,0 +1,30 @@
+{
+  "name": "url-shortener",
+  "version": "0.0.0",
+  "description": "URL Shortener",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jcapona/url-shortener.git"
+  },
+  "keywords": [
+    "shortener",
+    "url",
+    "fcc"
+  ],
+  "author": "Jorge Capona",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/jcapona/url-shortener/issues"
+  },
+  "dependencies": {
+    "express": "^4.9.8",
+    "jade": "^1.9.2"
+  },
+  "engines": {
+    "node": "4.1.1"
+  }
+}
