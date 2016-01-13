@@ -40,8 +40,8 @@ app.get("/*", function(request, response) {
     {
       if(resp == null)
         response.end(JSON.stringify({"error":"No short url found for given input"}));
-
-      response.redirect(resp);
+      else
+        response.redirect(resp);
     }
   });
 });
@@ -52,7 +52,7 @@ function redir(short_url,callback)
 {
   mongo.connect(MONGOLAB_URI, function(err, db) {
     if(err)
-      return callback(err);
+      return callback(err,null);
 
     db.collection('shorten').find({
       short: short_url
@@ -86,7 +86,7 @@ function shorten(url, callback)
 {
   mongo.connect(MONGOLAB_URI, function(err, db) {
     if(err)
-      return callback(err);
+      return callback(err,null);
 
     var col = db.collection('shorten');
     col.find({
