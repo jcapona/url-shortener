@@ -1,6 +1,6 @@
 var MONGOLAB_URI="mongodb://example:example@ds037415.mongolab.com:37415/url-shortener";
 var DET = /(([a-z]+:\/\/)?(([a-z0-9\-]+\.)+([a-z]{2}|aero|arpa|biz|com|coop|edu|gov|info|int|jobs|mil|museum|name|nato|net|org|pro|travel|local|internal))(:[0-9]{1,5})?(\/[a-z0-9_\-\.~]+)*(\/([a-z0-9_\-\.]*)(\?[a-z0-9+_\-\.%=&amp;]*)?)?(#[a-zA-Z0-9!$&'()*+.=-_~:@/?]*)?)(\s+|$)/;
-
+var base = "https://shortener-basecamp.herokuapp.com/";
 
 var mongo = require('mongodb').MongoClient;
 var express = require('express');
@@ -24,19 +24,59 @@ app.get("/new/*", function(request, response) {
   
   shorten(url,function(err,resp){
     if(err)
-      console.error("Error: "+err);
+      console.error(err);
     else
-      json = JSON.stringify({"original_url":url,"short_url":resp});
+      json = JSON.stringify({"original_url":url,"short_url":base+resp});
     
     response.end(json);
   });  
 });
 
 app.get("/*", function(request, response) {
-  response.render("index");
+  redirect(request.params[0],function(err,resp){
+    if(err)
+      console.error(err);
+    else
+    {
+      if(resp == null)
+        response.end(JSON.stringify({"error":"No short url found for given input"}));
+
+      response.redirect(resp);
+    }
+  });
 });
 
 app.listen(app.get('port'));
+
+function redirect(short_url,callback)
+{
+  mongo.connect(MONGOLAB_URI, function(err, db) {
+    if(err)
+      return callback(err);
+    else    
+      console.log("Connected to Mongolab DB");
+
+    db.collection('shorten').find({
+      short: short_url
+    }).toArray(function(err, documents) {
+      if(err) // On error
+      {
+        db.close();
+        callback(err,null);
+      }
+      else if(documents.length) // When url already exists
+      {
+        db.close();
+        callback(null,documents[0].url);
+      }
+      else // When it doesnt, returns error
+      {
+        db.close();
+        callback(null,null);
+      }
+    })
+  });
+}
 
 
 function shorten(url, callback)
@@ -72,7 +112,7 @@ function shorten(url, callback)
               return callback(err);
             }
 
-            col.insert(({"url":url,"short":short_url}), function(err, result) {
+            col.insert(({"url":url,"short":short_url.toString()}), function(err, result) {
               if(err)
               {
                 db.close();
