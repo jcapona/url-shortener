@@ -14,7 +14,7 @@ app.get("/", function(request, response) {
   response.render("index");
 });
 
-app.get("/*", function(request, response) {
+app.get("/new/*", function(request, response) {
   var url = request.params[0];
   var short_url = "";
   var json = JSON.stringify({"error":"URL invalid"});
@@ -22,15 +22,20 @@ app.get("/*", function(request, response) {
   if(url.match(DET) === null)
     response.end(json);  
   
+  console.log(url);
+  
   shorten(url,function(err,resp){
     if(err)
       console.error("Error: "+err);
     else
       json = JSON.stringify({"original_url":url,"short_url":resp});
       
-    response.end(json);            
-  });
-  
+    response.end(json);
+  });  
+});
+
+app.get("/*", function(request, response) {
+  response.render("index");
 });
 
 app.listen(app.get('port'));
@@ -38,31 +43,40 @@ app.listen(app.get('port'));
 
 function shorten(url, callback)
 {
-    // DB Connection
-    mongo.connect(MONGOLAB_URI, function(err, db) {
-      if(err)
-        console.dir(err);
-      else    
-        console.log("Connected to Mongolab DB");
+  mongo.connect(MONGOLAB_URI, function(err, db) {
+    if(err)
+      console.dir(err);
+    else    
+      console.log("Connected to Mongolab DB");
 
-      var col = db.collection('shorten');
-      col.find({
-        url: url
-      }).toArray(function(err, documents) {
-        console.log("finished looking for url...");
-        var resp = "";
-        if(err)
-          callback(err,null);
-        else if(documents.length)
-          resp = documents[0].short;
-        else
-        {
-          //TODO: Create new short url
-        }
-
+    var col = db.collection('shorten');
+    col.find({
+      url: url
+    }).toArray(function(err, documents) {
+      var resp = "";
+      if(err) // On error
+      {
         db.close();
-        callback(null,resp);
-      })
-  });
-      
+        callback(err,null);
+      }
+      else if(documents.length) // When url already exists
+      {
+        resp = documents[0].short;
+        db.close();
+      }
+      else // When it doesnt, create new document in collection
+      {
+        var short_url =" ";
+        col.insert(({"url":url,"short":short_url}), function(err, result) {
+            if(err)
+                callback(err);
+           
+            console.log(result);
+            db.close();
+        });
+      }
+
+      callback(null,resp);
+    })
+  });       
 }
