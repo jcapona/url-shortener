@@ -22,14 +22,12 @@ app.get("/new/*", function(request, response) {
   if(url.match(DET) === null)
     response.end(json);  
   
-  console.log(url);
-  
   shorten(url,function(err,resp){
     if(err)
       console.error("Error: "+err);
     else
       json = JSON.stringify({"original_url":url,"short_url":resp});
-      
+    
     response.end(json);
   });  
 });
@@ -45,7 +43,7 @@ function shorten(url, callback)
 {
   mongo.connect(MONGOLAB_URI, function(err, db) {
     if(err)
-      console.dir(err);
+      return callback(err);
     else    
       console.log("Connected to Mongolab DB");
 
@@ -63,20 +61,30 @@ function shorten(url, callback)
       {
         resp = documents[0].short;
         db.close();
+        callback(null,resp);
       }
       else // When it doesnt, create new document in collection
       {
-        var short_url =" ";
-        col.insert(({"url":url,"short":short_url}), function(err, result) {
-            if(err)
-                callback(err);
-           
-            console.log(result);
-            db.close();
+        col.count({}, function(err, short_url){
+            if(err) 
+            {
+              db.close();
+              return callback(err);
+            }
+
+            col.insert(({"url":url,"short":short_url}), function(err, result) {
+              if(err)
+              {
+                db.close();
+                return callback(err);
+              }
+             
+              resp = short_url;
+              db.close();
+              callback(null,resp);
+            });
         });
       }
-
-      callback(null,resp);
     })
   });       
 }
