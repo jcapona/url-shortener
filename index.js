@@ -33,7 +33,7 @@ app.get("/new/*", function(request, response) {
 });
 
 app.get("/*", function(request, response) {
-  redirect(request.params[0],function(err,resp){
+  redir(request.params[0],function(err,resp){
     if(err)
       console.error(err);
     else
@@ -48,7 +48,7 @@ app.get("/*", function(request, response) {
 
 app.listen(app.get('port'));
 
-function redirect(short_url,callback)
+function redir(short_url,callback)
 {
   mongo.connect(MONGOLAB_URI, function(err, db) {
     if(err)
@@ -68,6 +68,7 @@ function redirect(short_url,callback)
         var resp = documents[0].url;
         if(resp.search("://") == -1)
           resp = "http://"+resp;
+
 
         callback(null,resp);
       }
