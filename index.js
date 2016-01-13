@@ -53,8 +53,6 @@ function redirect(short_url,callback)
   mongo.connect(MONGOLAB_URI, function(err, db) {
     if(err)
       return callback(err);
-    else    
-      console.log("Connected to Mongolab DB");
 
     db.collection('shorten').find({
       short: short_url
@@ -67,7 +65,11 @@ function redirect(short_url,callback)
       else if(documents.length) // When url already exists
       {
         db.close();
-        callback(null,documents[0].url);
+        var resp = documents[0].url;
+        if(resp.search("://") == -1)
+          resp = "http://"+resp;
+
+        callback(null,resp);
       }
       else // When it doesnt, returns error
       {
@@ -84,8 +86,6 @@ function shorten(url, callback)
   mongo.connect(MONGOLAB_URI, function(err, db) {
     if(err)
       return callback(err);
-    else    
-      console.log("Connected to Mongolab DB");
 
     var col = db.collection('shorten');
     col.find({
